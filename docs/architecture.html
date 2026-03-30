@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TechSeva — Architecture Flow</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e2e8f0; min-height: 100vh; padding: 32px 24px; }
+
+  h1 { text-align: center; font-size: 22px; font-weight: 700; color: #a78bfa; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .subtitle { text-align: center; font-size: 12px; color: #64748b; margin-bottom: 32px; }
+
+  /* ── layout ─────────────────────────────── */
+  .diagram { display: flex; flex-direction: column; gap: 0; align-items: center; width: 100%; max-width: 1100px; margin: 0 auto; }
+
+  /* ── layer wrapper ──────────────────────── */
+  .layer { width: 100%; }
+  .layer-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #475569; margin-bottom: 8px; padding-left: 4px;
+  }
+
+  /* ── connector arrows ───────────────────── */
+  .arrow-row { display: flex; justify-content: center; align-items: center; height: 36px; gap: 0; }
+  .arrow-down {
+    width: 2px; height: 28px; background: #334155;
+    position: relative;
+  }
+  .arrow-down::after {
+    content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+    border-left: 5px solid transparent; border-right: 5px solid transparent;
+    border-top: 7px solid #334155;
+  }
+  .arrow-label { font-size: 10px; color: #475569; margin: 0 8px; }
+
+  /* ── boxes ──────────────────────────────── */
+  .box {
+    border-radius: 10px; padding: 14px 18px;
+    border: 1px solid; position: relative;
+  }
+  .box-title { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
+  .box-sub   { font-size: 10px; color: #94a3b8; }
+
+  /* colours */
+  .c-browser  { background: #1e293b; border-color: #334155; }
+  .c-traefik  { background: #1a1a2e; border-color: #4f46e5; color: #a5b4fc; }
+  .c-shell    { background: #0f2027; border-color: #0ea5e9; color: #7dd3fc; }
+  .c-mfe-auth { background: #1a0f2e; border-color: #7c3aed; color: #c4b5fd; }
+  .c-mfe-job  { background: #0f2018; border-color: #16a34a; color: #86efac; }
+  .c-mfe-adm  { background: #2a1000; border-color: #ea580c; color: #fdba74; }
+  .c-shared   { background: #1a1a1a; border-color: #b45309; color: #fcd34d; }
+  .c-store    { background: #1f1020; border-color: #d946ef; color: #f0abfc; }
+  .c-k8s      { background: #0a1628; border-color: #1d4ed8; color: #93c5fd; }
+  .c-auth-flow{ background: #111827; border-color: #374151; }
+
+  /* ── browser row ───── */
+  .browser-row { display: flex; justify-content: center; gap: 12px; }
+  .browser-chip {
+    background: #1e293b; border: 1px solid #334155; border-radius: 6px;
+    padding: 6px 14px; font-size: 11px; color: #94a3b8;
+  }
+  .browser-chip span { color: #e2e8f0; font-weight: 600; }
+
+  /* ── ingress ─────── */
+  .ingress-box {
+    background: #1a1a2e; border: 1px solid #4f46e5; border-radius: 10px; padding: 14px 20px;
+  }
+  .ingress-title { font-size: 13px; font-weight: 700; color: #a5b4fc; margin-bottom: 10px; }
+  .ingress-rules { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .ingress-rule {
+    background: #0f0f1f; border: 1px solid #312e81; border-radius: 6px;
+    padding: 8px 10px; text-align: center;
+  }
+  .ingress-rule .host { font-size: 10px; color: #818cf8; font-weight: 600; margin-bottom: 3px; }
+  .ingress-rule .svc  { font-size: 10px; color: #64748b; }
+  .ingress-rule .svc span { color: #94a3b8; }
+
+  /* ── k8s pods row ─── */
+  .pods-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .pod-box {
+    border-radius: 8px; padding: 12px 14px; border: 1px solid; text-align: center;
+  }
+  .pod-box .pod-name  { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
+  .pod-box .pod-rep   { font-size: 10px; color: #64748b; margin-bottom: 6px; }
+  .pod-box .pod-port  { font-size: 10px; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px 8px; display: inline-block; }
+
+  /* ── federation layer ─ */
+  .fed-wrapper {
+    background: #0d1b2a; border: 1px solid #0ea5e9; border-radius: 12px; padding: 18px;
+  }
+  .fed-title { font-size: 12px; font-weight: 700; color: #7dd3fc; margin-bottom: 14px; }
+
+  .fed-shell {
+    background: #0a1520; border: 1px solid #0284c7; border-radius: 8px; padding: 14px;
+    margin-bottom: 12px;
+  }
+  .fed-shell-title { font-size: 12px; font-weight: 700; color: #38bdf8; margin-bottom: 10px; }
+
+  .routes-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .route-item {
+    background: #0f1f30; border: 1px solid #164e63; border-radius: 6px; padding: 8px 10px;
+  }
+  .route-path { font-size: 11px; font-weight: 700; color: #67e8f9; }
+  .route-guard { font-size: 9px; color: #f59e0b; margin-top: 2px; }
+  .route-remote { font-size: 9px; color: #94a3b8; margin-top: 2px; }
+
+  .remotes-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .remote-box {
+    border-radius: 8px; padding: 10px 12px; border: 1px solid;
+  }
+  .remote-box .rem-name { font-size: 11px; font-weight: 700; margin-bottom: 3px; }
+  .remote-box .rem-exp  { font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
+  .remote-box .rem-url  { font-size: 9px; color: #64748b; font-family: monospace; }
+
+  /* ── shared packages ─ */
+  .shared-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .shared-pkg {
+    background: #1a1a1a; border: 1px solid #92400e; border-radius: 6px;
+    padding: 8px 10px; text-align: center;
+  }
+  .shared-pkg .pkg-name { font-size: 10px; font-weight: 700; color: #fcd34d; }
+  .shared-pkg .pkg-flag { font-size: 9px; color: #78716c; margin-top: 2px; }
+
+  /* ── auth flow ────── */
+  .auth-flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .flow-box {
+    background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 12px 14px;
+  }
+  .flow-title { font-size: 11px; font-weight: 700; color: #f59e0b; margin-bottom: 8px; }
+  .flow-step {
+    display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; font-size: 10px; color: #94a3b8;
+  }
+  .flow-step .num {
+    background: #1f2937; border-radius: 50%; width: 16px; height: 16px; min-width: 16px;
+    display: flex; align-items: center; justify-content: center; font-size: 9px; color: #6b7280; font-weight: 700;
+  }
+  .flow-step .ok  { color: #4ade80; }
+  .flow-step .err { color: #f87171; }
+  .flow-step .nav { color: #818cf8; }
+
+  /* ── zustand store ─── */
+  .store-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .store-field {
+    background: #200830; border: 1px solid #7e22ce; border-radius: 6px;
+    padding: 8px 10px;
+  }
+  .store-field .sf-key   { font-size: 10px; color: #d8b4fe; font-weight: 700; font-family: monospace; }
+  .store-field .sf-type  { font-size: 9px; color: #6b21a8; margin-top: 1px; }
+  .store-field .sf-note  { font-size: 9px; color: #64748b; margin-top: 3px; }
+
+  /* ── legend ─────────── */
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 24px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 10px; color: #64748b; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>TechSeva · Architecture Flow</h1>
+<p class="subtitle">pnpm monorepo · Module Federation · k3d / k8s · Traefik · React Router v6 · Zustand</p>
+
+<div class="diagram">
+
+  <!-- ══ BROWSER ══════════════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">① Browser</div>
+    <div class="browser-row">
+      <div class="browser-chip"><span>techseva.local</span> → shell</div>
+      <div class="browser-chip"><span>mfe-auth.techseva.local</span> → auth</div>
+      <div class="browser-chip"><span>mfe-jobseeker.techseva.local</span> → jobseeker</div>
+      <div class="browser-chip"><span>mfe-admin.techseva.local</span> → admin</div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+      <div class="arrow-label" style="margin-top:4px;">HTTP :80 → hosts file → 127.0.0.1</div>
+    </div>
+  </div>
+
+  <!-- ══ K8S / TRAEFIK ════════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">② k3d Cluster · k8s Ingress (Traefik)</div>
+    <div class="ingress-box">
+      <div class="ingress-title">Traefik IngressController · techseva namespace</div>
+      <div class="ingress-rules">
+        <div class="ingress-rule">
+          <div class="host">techseva.local</div>
+          <div class="svc">svc/<span>shell</span> :80</div>
+        </div>
+        <div class="ingress-rule">
+          <div class="host">mfe-auth.techseva.local</div>
+          <div class="svc">svc/<span>mfe-auth</span> :80</div>
+        </div>
+        <div class="ingress-rule">
+          <div class="host">mfe-jobseeker.techseva.local</div>
+          <div class="svc">svc/<span>mfe-jobseeker</span> :80</div>
+        </div>
+        <div class="ingress-rule">
+          <div class="host">mfe-admin.techseva.local</div>
+          <div class="svc">svc/<span>mfe-admin</span> :80</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+      <div class="arrow-label" style="margin-top:4px;">routes to nginx pods</div>
+    </div>
+  </div>
+
+  <!-- ══ K8S PODS ══════════════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">③ Kubernetes Deployments (2 replicas each · nginx:1.27-alpine)</div>
+    <div class="pods-row">
+      <div class="pod-box" style="background:#0f2027;border-color:#0ea5e9;">
+        <div class="pod-name" style="color:#7dd3fc;">shell</div>
+        <div class="pod-rep">2 replicas</div>
+        <div class="pod-port" style="color:#38bdf8;">:80 / nginx</div>
+      </div>
+      <div class="pod-box" style="background:#1a0f2e;border-color:#7c3aed;">
+        <div class="pod-name" style="color:#c4b5fd;">mfe-auth</div>
+        <div class="pod-rep">2 replicas</div>
+        <div class="pod-port" style="color:#a78bfa;">/assets/remoteEntry.js</div>
+      </div>
+      <div class="pod-box" style="background:#0f2018;border-color:#16a34a;">
+        <div class="pod-name" style="color:#86efac;">mfe-dashboard-jobseeker</div>
+        <div class="pod-rep">2 replicas</div>
+        <div class="pod-port" style="color:#4ade80;">/assets/remoteEntry.js</div>
+      </div>
+      <div class="pod-box" style="background:#2a1000;border-color:#ea580c;">
+        <div class="pod-name" style="color:#fdba74;">mfe-dashboard-admin</div>
+        <div class="pod-rep">2 replicas</div>
+        <div class="pod-port" style="color:#fb923c;">/assets/remoteEntry.js</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+      <div class="arrow-label" style="margin-top:4px;">shell fetches remoteEntry.js at runtime · Module Federation</div>
+    </div>
+  </div>
+
+  <!-- ══ MODULE FEDERATION ════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">④ React App · Module Federation (vite-plugin-federation)</div>
+    <div class="fed-wrapper">
+      <div class="fed-title">Shell — createBrowserRouter</div>
+
+      <!-- Shell routes -->
+      <div class="fed-shell">
+        <div class="fed-shell-title">Shell Routes</div>
+        <div class="routes-grid">
+          <div class="route-item">
+            <div class="route-path">/login &amp; /signup</div>
+            <div class="route-guard">PUBLIC</div>
+            <div class="route-remote">→ RemoteAuth (lazy)</div>
+          </div>
+          <div class="route-item">
+            <div class="route-path">/dashboard</div>
+            <div class="route-guard">🔒 AuthGuard + RBACGuard<br/>view:jobseeker-dashboard</div>
+            <div class="route-remote">→ RemoteJobseeker (lazy)</div>
+          </div>
+          <div class="route-item">
+            <div class="route-path">/admin</div>
+            <div class="route-guard">🔒 AuthGuard + RBACGuard<br/>view:admin-dashboard</div>
+            <div class="route-remote">→ RemoteAdmin (lazy)</div>
+          </div>
+          <div class="route-item">
+            <div class="route-path">/</div>
+            <div class="route-guard">RoleRedirect</div>
+            <div class="route-remote">admin→/admin · seeker→/dashboard</div>
+          </div>
+          <div class="route-item" style="grid-column:span 2;">
+            <div class="route-path">AuthGuard behaviour</div>
+            <div class="route-guard">isHydrating=true → Spinner · !token → /login · else → children</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remotes -->
+      <div style="font-size:11px;color:#64748b;margin-bottom:8px;">Remote MFEs (loaded via remoteEntry.js URLs baked at Docker build time)</div>
+      <div class="remotes-row">
+        <div class="remote-box" style="background:#1a0f2e;border-color:#7c3aed;">
+          <div class="rem-name" style="color:#c4b5fd;">mfeAuth / AuthApp</div>
+          <div class="rem-exp">exposes: ./AuthApp</div>
+          <div class="rem-url">useLocation() → LoginPage | SignupPage</div>
+        </div>
+        <div class="remote-box" style="background:#0f2018;border-color:#16a34a;">
+          <div class="rem-name" style="color:#86efac;">mfeDashboardJobseeker / JobseekerApp</div>
+          <div class="rem-exp">exposes: ./JobseekerApp</div>
+          <div class="rem-url">Jobseeker dashboard UI</div>
+        </div>
+        <div class="remote-box" style="background:#2a1000;border-color:#ea580c;">
+          <div class="rem-name" style="color:#fdba74;">mfeDashboardAdmin / AdminApp</div>
+          <div class="rem-exp">exposes: ./AdminApp</div>
+          <div class="rem-url">Admin dashboard UI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+      <div class="arrow-label" style="margin-top:4px;">singleton shared packages (one copy across all MFEs)</div>
+    </div>
+  </div>
+
+  <!-- ══ SHARED PACKAGES ══════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">⑤ Federation Shared Singletons</div>
+    <div class="shared-row">
+      <div class="shared-pkg">
+        <div class="pkg-name">react</div>
+        <div class="pkg-flag">singleton ^18.3</div>
+      </div>
+      <div class="shared-pkg">
+        <div class="pkg-name">react-dom</div>
+        <div class="pkg-flag">singleton ^18.3</div>
+      </div>
+      <div class="shared-pkg">
+        <div class="pkg-name">react-router-dom</div>
+        <div class="pkg-flag">singleton ^6.26 · shared router ctx</div>
+      </div>
+      <div class="shared-pkg">
+        <div class="pkg-name">@tanstack/react-query</div>
+        <div class="pkg-flag">singleton ^5.59</div>
+      </div>
+      <div class="shared-pkg" style="border-color:#d97706;">
+        <div class="pkg-name" style="color:#fbbf24;">@techseva/shared-store ⚡</div>
+        <div class="pkg-flag" style="color:#92400e;">singleton — one Zustand store<br/>across ALL MFEs + shell</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+      <div class="arrow-label" style="margin-top:4px;">auth state read &amp; written by all MFEs via shared store</div>
+    </div>
+  </div>
+
+  <!-- ══ ZUSTAND STORE ════════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">⑥ Zustand Auth Store — @techseva/shared-store</div>
+    <div style="background:#1a0820;border:1px solid #7e22ce;border-radius:10px;padding:14px 16px;">
+      <div class="store-grid">
+        <div class="store-field">
+          <div class="sf-key">accessToken</div>
+          <div class="sf-type">string | null</div>
+          <div class="sf-note">in-memory only, never localStorage</div>
+        </div>
+        <div class="store-field">
+          <div class="sf-key">user</div>
+          <div class="sf-type">User | null</div>
+          <div class="sf-note">id · email · role · fullName</div>
+        </div>
+        <div class="store-field">
+          <div class="sf-key">isHydrating</div>
+          <div class="sf-type">boolean (starts true)</div>
+          <div class="sf-note">false after refresh resolves/fails</div>
+        </div>
+        <div class="store-field">
+          <div class="sf-key">setAccessToken()</div>
+          <div class="sf-type">action</div>
+          <div class="sf-note">sets token + user, hydrating→false</div>
+        </div>
+        <div class="store-field">
+          <div class="sf-key">clearAuth()</div>
+          <div class="sf-type">action</div>
+          <div class="sf-note">clears token + user, hydrating→false</div>
+        </div>
+        <div class="store-field">
+          <div class="sf-key">isAuthenticated</div>
+          <div class="sf-type">derived selector</div>
+          <div class="sf-note">!!accessToken</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow-row">
+    <div style="display:flex;flex-direction:column;align-items:center;">
+      <div class="arrow-down"></div>
+    </div>
+  </div>
+
+  <!-- ══ AUTH FLOWS ════════════════════════════════════════════════════ -->
+  <div class="layer">
+    <div class="layer-label">⑦ Auth Flows</div>
+    <div class="auth-flow-grid">
+
+      <div class="flow-box">
+        <div class="flow-title">⟳ Page Load / Silent Refresh</div>
+        <div class="flow-step"><div class="num">1</div><span>App mounts → POST /auth/refresh (httpOnly cookie)</span></div>
+        <div class="flow-step"><div class="num">2</div><span class="ok">✓ Success → setAccessToken(token, user) → isHydrating=false → RoleRedirect</span></div>
+        <div class="flow-step"><div class="num">3</div><span class="err">✗ Fail (no backend) → clearAuth() → isHydrating=false → AuthGuard → /login</span></div>
+        <div class="flow-step"><div class="num">4</div><span>While isHydrating=true → AuthGuard renders Spinner</span></div>
+      </div>
+
+      <div class="flow-box">
+        <div class="flow-title">🔑 Login Flow</div>
+        <div class="flow-step"><div class="num">1</div><span>LoginForm submit → useLogin() mutation → authApi.login() (mock, in-memory)</span></div>
+        <div class="flow-step"><div class="num">2</div><span>Validate email+password → makeToken() → return accessToken + user</span></div>
+        <div class="flow-step"><div class="num">3</div><span class="ok">mutation.onSuccess → setAccessToken() → shared store updated (all MFEs see it)</span></div>
+        <div class="flow-step"><div class="num">4</div><span class="nav">handleSuccess → navigate(/admin) for admin · navigate(/dashboard) for seeker</span></div>
+        <div class="flow-step"><div class="num">5</div><span>AuthGuard passes (isAuthenticated=true) → RBACGuard checks permission → MFE renders</span></div>
+      </div>
+
+      <div class="flow-box">
+        <div class="flow-title">🔐 Mock Users (authApi.ts)</div>
+        <div class="flow-step"><div class="num">👤</div><span>admin@techseva.com / admin123 → role: <span style="color:#fb923c;">admin</span> → /admin</span></div>
+        <div class="flow-step"><div class="num">👤</div><span>seeker@techseva.com / seeker123 → role: <span style="color:#4ade80;">jobseeker</span> → /dashboard</span></div>
+        <div class="flow-step"><div class="num">✍</div><span>signup creates new in-memory user (reset on page reload)</span></div>
+      </div>
+
+      <div class="flow-box">
+        <div class="flow-title">🛡 RBAC Guard Permissions</div>
+        <div class="flow-step"><div class="num">A</div><span style="color:#fb923c;">admin</span> → view:admin-dashboard · view:jobseeker-dashboard</span></div>
+        <div class="flow-step"><div class="num">J</div><span style="color:#4ade80;">jobseeker</span> → view:jobseeker-dashboard only</span></div>
+        <div class="flow-step"><div class="num">✗</div><span>Unauthorized → /unauthorized page</span></div>
+        <div class="flow-step"><div class="num">↩</div><span>Sign Out → clearAuth() → navigate /login</span></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9;"></div>Shell</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#7c3aed;"></div>mfe-auth</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#16a34a;"></div>mfe-dashboard-jobseeker</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ea580c;"></div>mfe-dashboard-admin</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#d946ef;"></div>shared-store (Zustand)</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#b45309;"></div>Federation Singletons</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4f46e5;"></div>Traefik / k8s</div>
+</div>
+
+</body>
+</html>

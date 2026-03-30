@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mfe-auth
+  namespace: techseva
+  labels:
+    app: mfe-auth
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mfe-auth
+  template:
+    metadata:
+      labels:
+        app: mfe-auth
+    spec:
+      containers:
+        - name: mfe-auth
+          image: techseva/mfe-auth:latest
+          imagePullPolicy: IfNotPresent   # use locally loaded image in k3d
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /assets/remoteEntry.js
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /assets/remoteEntry.js
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: mfe-auth
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mfe-auth
+  namespace: techseva
+  labels:
+    app: mfe-auth
+spec:
+  type: ClusterIP
+  selector:
+    app: mfe-auth
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

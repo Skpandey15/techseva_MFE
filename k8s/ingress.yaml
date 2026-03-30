@@ -1,0 +1,71 @@
+# Traefik v2 (k3d default) picks up standard networking.k8s.io/v1 Ingress automatically.
+# No port-forward needed — traffic enters via the k3d loadbalancer on host port 80.
+#
+# Add these entries to /etc/hosts (or C:\Windows\System32\drivers\etc\hosts on Windows):
+#   127.0.0.1  techseva.local
+#   127.0.0.1  mfe-auth.techseva.local
+#   127.0.0.1  mfe-jobseeker.techseva.local
+#   127.0.0.1  mfe-admin.techseva.local
+#
+# The shell is built with remote URLs pointing to the MFE subdomains above —
+# see the `docker-build-k8s` Makefile target.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: techseva-ingress
+  namespace: techseva
+  annotations:
+    # Traefik annotations
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    # Preserve Host header so nginx server_name matching works if needed
+    traefik.ingress.kubernetes.io/preserve-host: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    # ── Shell (container app) ────────────────────────────────────────────────
+    - host: techseva.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: shell
+                port:
+                  number: 80
+
+    # ── MFE: Auth ────────────────────────────────────────────────────────────
+    - host: mfe-auth.techseva.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mfe-auth
+                port:
+                  number: 80
+
+    # ── MFE: Jobseeker Dashboard ─────────────────────────────────────────────
+    - host: mfe-jobseeker.techseva.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mfe-dashboard-jobseeker
+                port:
+                  number: 80
+
+    # ── MFE: Admin Dashboard ─────────────────────────────────────────────────
+    - host: mfe-admin.techseva.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mfe-dashboard-admin
+                port:
+                  number: 80

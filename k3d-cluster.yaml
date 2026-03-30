@@ -1,0 +1,29 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: techseva
+
+# 1 server + 2 agents — enough for local MFE testing
+servers: 1
+agents: 2
+
+# Traefik (k3d built-in) binds ports 80 and 443 on the host via the
+# load-balancer node. No port-forward needed — all ingress traffic enters here.
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+
+image: rancher/k3s:v1.30.4-k3s1
+
+options:
+  k3s:
+    extraArgs:
+      # Traefik v2 is the k3d default ingress controller — keep it enabled.
+      # It picks up standard networking.k8s.io/v1 Ingress resources automatically.
+      - arg: "--tls-san=127.0.0.1"
+        nodeFilters:
+          - server:*

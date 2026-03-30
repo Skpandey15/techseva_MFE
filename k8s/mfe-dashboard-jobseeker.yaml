@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mfe-dashboard-jobseeker
+  namespace: techseva
+  labels:
+    app: mfe-dashboard-jobseeker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: mfe-dashboard-jobseeker
+  template:
+    metadata:
+      labels:
+        app: mfe-dashboard-jobseeker
+    spec:
+      containers:
+        - name: mfe-dashboard-jobseeker
+          image: techseva/mfe-dashboard-jobseeker:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /assets/remoteEntry.js
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /assets/remoteEntry.js
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: mfe-dashboard-jobseeker
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mfe-dashboard-jobseeker
+  namespace: techseva
+  labels:
+    app: mfe-dashboard-jobseeker
+spec:
+  type: ClusterIP
+  selector:
+    app: mfe-dashboard-jobseeker
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shell
+  namespace: techseva
+  labels:
+    app: shell
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shell
+  template:
+    metadata:
+      labels:
+        app: shell
+    spec:
+      containers:
+        - name: shell
+          # Built with k8s ingress remote URLs baked in — see Makefile docker-build target
+          image: techseva/shell:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              protocol: TCP
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
+            limits:
+              cpu: "200m"
+              memory: "64Mi"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 15
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              app: shell
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shell
+  namespace: techseva
+  labels:
+    app: shell
+spec:
+  type: ClusterIP
+  selector:
+    app: shell
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP

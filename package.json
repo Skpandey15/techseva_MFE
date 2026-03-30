@@ -1,0 +1,26 @@
+{
+  "name": "techseva",
+  "private": true,
+  "scripts": {
+    "dev:shell": "pnpm --filter @techseva/shell dev",
+    "dev:auth": "pnpm --filter @techseva/mfe-auth dev",
+    "dev:jobseeker": "pnpm --filter @techseva/mfe-dashboard-jobseeker dev",
+    "dev:admin": "pnpm --filter @techseva/mfe-dashboard-admin dev",
+    "dev:remotes": "pnpm --parallel --filter './apps/mfe-*' dev",
+    "serve:auth": "pnpm --filter @techseva/mfe-auth serve",
+    "serve:jobseeker": "pnpm --filter @techseva/mfe-dashboard-jobseeker serve",
+    "serve:admin": "pnpm --filter @techseva/mfe-dashboard-admin serve",
+    "serve:remotes": "pnpm --parallel --filter './apps/mfe-*' serve",
+    "build:packages": "pnpm -r --filter './packages/**' build",
+    "build:apps": "pnpm -r --filter './apps/**' build",
+    "build:all": "pnpm build:packages && pnpm build:apps",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}
